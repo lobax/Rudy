@@ -14,11 +14,19 @@ parse_request(R0) ->
     {Body, _}       = message_body(R2), 
     {Request, Headers, Body}. 
 
-request_line([$G, $E, $T, 32|R0]) -> 
-    {URI, R1}   = request_uri(R0), 
-    {Ver, R2}   = http_version(R1), 
-    [13, 10|R3]  = R2, 
-    {{get, URI, Ver}, R3}. 
+request_line(R0) -> 
+    {Method, R1}    = method_string(R0),
+    {URI, R2}       = request_uri(R1), 
+    {Ver, R3}       = http_version(R2), 
+    [13, 10|R4]  = R3, 
+    {{Method, URI, Ver}, R4}. 
+
+method_string([$G, $E, $T, 32|R0]) -> 
+    {get, R0}; 
+method_string([$H, $E, $A, $D, 32|R0]) -> 
+    {get, R0}; 
+method_string([$P, $O, $S, $T, 32|R0]) -> 
+    {get, R0}; 
 
 request_uri([32|R0]) -> 
     {[], R0}; 
