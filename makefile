@@ -9,7 +9,10 @@ ebin/%.beam: src/%.erl
 
 all: $(beam_files)
 
-.PHONY: clean
+.PHONY: clean run
 
 clean: 
 	rm -rf ebin/
+
+run:
+	erl -pa ./ebin -eval 'rudy:start(8080)' 
