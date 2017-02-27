@@ -26,7 +26,7 @@ method_string([$G, $E, $T, 32|R0]) ->
 method_string([$H, $E, $A, $D, 32|R0]) -> 
     {get, R0}; 
 method_string([$P, $O, $S, $T, 32|R0]) -> 
-    {get, R0}; 
+    {get, R0}.
 
 request_uri([32|R0]) -> 
     {[], R0}; 
