@@ -8,3 +8,8 @@ ebin/%.beam: src/%.erl
 	erlc -o ebin $<
 
 all: $(beam_files)
+
+.PHONY: clean
+
+clean: 
+	rm -rf ebin/
