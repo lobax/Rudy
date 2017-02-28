@@ -8,6 +8,9 @@ start(Port) ->
 stop() -> 
     exit(whereis(rudy), "time to die"). 
 
+%%%%%%%%%%%%%%%%%%
+%%% INIT PORTS %%%
+%%%%%%%%%%%%%%%%%%
 
 init(Port) -> 
     Opt = [list, {active, false}, {reuseaddr, true}],
@@ -19,6 +22,10 @@ init(Port) ->
         {error, _Error} -> 
             error
     end. 
+
+%%%%%%%%%%%%%%%%%%
+%%%  HANDLER   %%%
+%%%%%%%%%%%%%%%%%%
 
 handler(Listen) -> 
     case gen_tcp:accept(Listen) of
@@ -41,5 +48,16 @@ request(Client) ->
     end, 
     gen_tcp:close(Client). 
 
-reply({{get, URI, _}, _, _}) -> 
-    http:ok("Hej anna!"). 
+reply({{get, [$/ |URI], _}, _, _}) -> 
+    io:format(URI), 
+    io:format("~n"),
+    case file:read_file(URI) of
+        {ok, File} -> 
+            io:format(File), 
+            http:ok([File]);
+        {error, Reason} -> 
+            io:format("404 Not found."),
+            http:fnf() 
+    end. 
+
+

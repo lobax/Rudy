@@ -1,9 +1,8 @@
 -module(http). 
--export([parse_request/1,ok/1,get/1]). 
+-export([parse_request/1,ok/1,fnf/0]). 
 
-
-get(URI) -> 
-    "GET " ++ URI ++ " HTTP/1.1\r\n" ++ "\r\n". 
+fnf() -> 
+    "HTTP/1.1 404 Not Found\r\n" ++ "\r\n".
 
 ok(Body) -> 
     "HTTP/1.1 200 OK\r\n" ++ "\r\n" ++ Body. 
