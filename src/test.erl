@@ -43,7 +43,7 @@ request(Host, Port) ->
     Connect = gen_tcp:connect(Host, Port, Opt),
     case Connect of 
         {ok, Server} -> 
-            gen_tcp:send(Server, http:get("foo")),
+            gen_tcp:send(Server, requests:get("/foo")),
             Recv = gen_tcp:recv(Server, 0),
             case Recv of
                {ok, _} ->
