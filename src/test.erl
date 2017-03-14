@@ -3,7 +3,7 @@
   
 host() ->
     %{130,229,175,166}.
-    localhost.
+    localhost. 
 
 bench(T) ->
     file:write_file("out/output.dat",[""]),

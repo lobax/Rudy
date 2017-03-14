@@ -13,10 +13,12 @@ stop() ->
 %%%%%%%%%%%%%%%%%%
 
 init(Port) -> 
+    Monitor = monitor:start(), 
     Opt = [list, {active, false}, {reuseaddr, true}],
     case gen_tcp:listen(Port, Opt) of 
         {ok, Listen} -> 
-            handler(Listen), 
+            Monitor ! listen,
+            handler(Listen, Monitor), 
             gen_tcp:close(Listen), 
             ok; 
         {error, _Error} -> 
@@ -27,11 +29,12 @@ init(Port) ->
 %%%  HANDLER   %%%
 %%%%%%%%%%%%%%%%%%
 
-handler(Listen) -> 
+handler(Listen, Monitor) -> 
     case gen_tcp:accept(Listen) of
         {ok, Client} -> 
+            Monitor ! request_accepted, 
             request(Client),
-            handler(Listen);
+            handler(Listen, Monitor);
         {error, _Error} -> 
             error
     end. 
