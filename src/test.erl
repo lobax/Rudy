@@ -2,7 +2,7 @@
 -export([bench/1]). 
   
 host() ->
-    {130,229,175,166}.
+    localhost. 
 
 bench(T) ->
     file:write_file("output.dat",[""]),
