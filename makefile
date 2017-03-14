@@ -9,7 +9,7 @@ ebin/%.beam: src/%.erl
 
 all: $(beam_files)
 
-.PHONY: clean run
+.PHONY: clean run rudy2
 
 clean: 
 	rm -rf ebin/
@@ -17,6 +17,9 @@ clean:
 
 run: all
 	erl -pa ./ebin -eval 'rudy:start(8080)'
+
+rudy2: all
+	erl -pa ./ebin -eval 'rudy2:start(8080)'
 
 test: all
 	mkdir -p out
