@@ -38,6 +38,7 @@ handler(Listen) ->
 
 request(Client) -> 
     Recv = gen_tcp:recv(Client, 0), 
+    io:format("~n"),
     case Recv of
         {ok, Str} -> 
             Request = http:parse_request(Str),
@@ -48,13 +49,19 @@ request(Client) ->
     end, 
     gen_tcp:close(Client). 
 
+reply({error, Reason}) -> 
+    case Reason of 
+        bad_req -> 
+            http:bad_req()
+    end; 
+
 reply({{get, [$/ |URI], _}, _, _}) -> 
     io:format("[Request] ~p ~n[Response] ",[URI]),
     case file:read_file(URI) of
         {ok, File} -> 
             io:format("~p ~n",[File]), 
             http:ok([File]);
-        {error, Reason} -> 
+        {error, _Reason} -> 
             io:format("404 Not found~n"),
             http:fnf() 
     end. 
