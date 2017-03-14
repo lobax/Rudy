@@ -1,10 +1,20 @@
 -module(test). 
--export([bench/3]). 
+-export([bench/1]). 
 
+bench(T) ->
+    file:write_file("output.dat",[""]),
+    N = 100,
+    Port = 8080,
+    bench(N,T,Port).
+
+bench(_,0,_) ->
+    ok;
 bench(N, T, Port) -> 
     Start = erlang:system_time(micro_seconds),
-    {End, Disconnects} = thread_spawn(N, T, Port), 
-    {End - Start, Disconnects}. 
+    {End, {Disconnects, Dropped}} = thread_spawn(N, T, Port),
+    file:write_file("output.dat",  io_lib:fwrite("~p ~p ~p ~p ~p~n", [N, T, End - Start, Disconnects, Dropped]), [append]),
+    io:format("The execution time is: ~p, disconnects: ~p, drops: ~p~n", [End - Start, Disconnects, Dropped]),
+    bench(N, T-1, Port).
 
 thread_spawn(_, 0, _) -> 
     {0, {0,0}};

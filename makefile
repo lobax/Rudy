@@ -15,4 +15,7 @@ clean:
 	rm -rf ebin/
 
 run:
-	erl -pa ./ebin -eval 'rudy:start(8080)' -noshell
+	erl -pa ./ebin -eval 'rudy:start(8080)'
+
+test:
+	@erl -pa ./ebin -eval 'test:bench(10)' -eval 'init:stop()' -noshell
