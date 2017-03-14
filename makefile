@@ -13,11 +13,13 @@ all: $(beam_files)
 
 clean: 
 	rm -rf ebin/
+	rm -rf out/
 
 run: all
 	erl -pa ./ebin -eval 'rudy:start(8080)'
 
 test: all
+	mkdir -p out
 	@erl -pa ./ebin -eval 'test:bench(25)' -eval 'init:stop()' -noshell
 	gnuplot gnuplot
 
