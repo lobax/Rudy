@@ -6,7 +6,7 @@ host() ->
    % localhost.
 
 bench(T) ->
-    file:write_file("output.dat",[""]),
+    file:write_file("out/output.dat",[""]),
     N = 25,
     Port = 8080,
     bench(N,T,Port).
