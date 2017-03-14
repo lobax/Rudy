@@ -1,5 +1,8 @@
 -module(test). 
 -export([bench/1]). 
+  
+host() ->
+    {130,229,175,166}.
 
 bench(T) ->
     file:write_file("output.dat",[""]),
@@ -35,12 +38,12 @@ thread_spawn(N, T, Port) ->
     end. 
 
 thread(Pid,N,Port) -> 
-    Fails = run(N, localhost, Port), 
+    Fails = run(N, host(), Port), 
     Finish = erlang:system_time(micro_seconds), 
     Pid ! {ok, Finish, Fails}.
 
-run(N, localhost, Port) -> 
-    run(N, localhost, Port, {0,0}). 
+run(N, Host, Port) -> 
+    run(N, Host, Port, {0,0}). 
 
 run(0, _, _, {Disconnects, Dropped}) -> 
     {Disconnects, Dropped};

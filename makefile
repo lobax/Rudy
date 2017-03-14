@@ -14,8 +14,8 @@ all: $(beam_files)
 clean: 
 	rm -rf ebin/
 
-run:
+run: all
 	erl -pa ./ebin -eval 'rudy:start(8080)'
 
-test:
+test: all
 	@erl -pa ./ebin -eval 'test:bench(10)' -eval 'init:stop()' -noshell
