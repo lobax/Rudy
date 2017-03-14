@@ -6,18 +6,28 @@ host() ->
 
 bench(T) ->
     file:write_file("output.dat",[""]),
-    N = 100,
+    N = 25,
     Port = 8080,
     bench(N,T,Port).
 
 bench(_,0,_) ->
     ok;
 bench(N, T, Port) -> 
+    Iterations = 5,
+    {Time, Lost} = bench_average(N, T, Port, Iterations), 
+    file:write_file("output.dat",  io_lib:fwrite("~p ~p ~p ~p ~p~n", [N, T, Time, Lost, Iterations]), [append]),
+    io:format("T: ~p, The execution time is: ~p, lost connections: ~p~n", [T, Time, Lost]),
+    bench(N, T-1, Port).
+
+bench_average(N,T,Port,I) ->
+    bench_average(N, T, Port, I, 0, 0, I).
+
+bench_average(_,_,_,0, Time, Lost, Num) ->
+    {(Time / Num), (Lost / Num)};
+bench_average(N, T, Port, I, Time, Lost, Num) ->
     Start = erlang:system_time(micro_seconds),
     {End, {Disconnects, Dropped}} = thread_spawn(N, T, Port),
-    file:write_file("output.dat",  io_lib:fwrite("~p ~p ~p ~p ~p~n", [N, T, End - Start, Disconnects, Dropped]), [append]),
-    io:format("The execution time is: ~p, disconnects: ~p, drops: ~p~n", [End - Start, Disconnects, Dropped]),
-    bench(N, T-1, Port).
+    bench_average(N, T, Port, I - 1, Time + (End - Start), Lost + (Disconnects + Dropped), Num).
 
 thread_spawn(_, 0, _) -> 
     {0, {0,0}};

@@ -18,4 +18,8 @@ run: all
 	erl -pa ./ebin -eval 'rudy:start(8080)'
 
 test: all
-	@erl -pa ./ebin -eval 'test:bench(10)' -eval 'init:stop()' -noshell
+	@erl -pa ./ebin -eval 'test:bench(25)' -eval 'init:stop()' -noshell
+	gnuplot gnuplot
+
+plot: output.dat
+	gnuplot gnuplot
