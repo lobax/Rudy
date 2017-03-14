@@ -1,6 +1,8 @@
 -module(monitor). 
 -export([start/0]). 
 
+logfile() -> 
+    "out/rudy.log".
 
 start() -> 
     spawn(fun() -> init() end).
@@ -28,7 +30,7 @@ listen(Count) ->
                 0 -> 
                     listen(0);
                 _ -> 
-                    file:write_file("rudy.log",  io_lib:fwrite("~p Requests per second: ~p~n", [os:timestamp(), Count]), [append]),
+                    file:write_file(logfile(),  io_lib:fwrite("~p Requests per second: ~p~n", [os:timestamp(), Count]), [append]),
                     listen(0)
             end
     after 0 -> 
