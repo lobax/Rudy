@@ -16,7 +16,7 @@ bench(_,0,_) ->
 bench(N, T, Port) -> 
     Iterations = 5,
     {Time, Lost} = bench_average(N, T, Port, Iterations), 
-    file:write_file("output.dat",  io_lib:fwrite("~p ~p ~p ~p ~p~n", [N, T, Time, Lost, Iterations]), [append]),
+    file:write_file("out/output.dat",  io_lib:fwrite("~p ~p ~p ~p ~p~n", [N, T, Time, Lost, Iterations]), [append]),
     io:format("T: ~p, The execution time is: ~p, lost connections: ~p~n", [T, Time, Lost]),
     bench(N, T-1, Port).
 
