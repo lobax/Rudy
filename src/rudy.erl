@@ -61,7 +61,7 @@ reply({error, Reason}) ->
 reply({{get, [$/ |URI], _}, _, _}) -> 
     io:format("[Request] ~p ~n[Response] ",[URI]),
     timer:sleep(20),
-    case file:read_file(URI) of
+    case file:read_file("web_html/" ++ URI) of
         {ok, File} -> 
             io:format("~p ~n",[File]), 
             http:ok([File]);

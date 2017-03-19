@@ -26,7 +26,7 @@ bench_average(N,T,Port,I) ->
 bench_average(_,_,_,0, Time, Lost, Num) ->
     {(Time / Num), (Lost / Num)};
 bench_average(N, T, Port, I, Time, Lost, Num) ->
-    Start = erlang:system_time(millisecond),
+    Start =  erlang:system_time(milli_seconds),
     {End, {Disconnects, Dropped}} = thread_spawn(N, T, Port),
     bench_average(N, T, Port, I - 1, Time + (End - Start), Lost + (Disconnects + Dropped), Num).
 
@@ -34,13 +34,13 @@ bench_average(N, T, Port, I, Time, Lost, Num) ->
 thread_spawn(N,T,Port) -> 
     case N rem T of
         0 -> 
-            thread_spawn(N,T,T,Port); 
-        _ -> 
-            thread_spawn(N,T-1,T-1,Port)
+            thread_spawn(N,T,T,Port,0); 
+        Overflow ->
+            thread_spawn(N,T-1,T-1,Port, Overflow)
     end. 
 
 
-thread_spawn(N, 0, Total_T, Port) -> 
+thread_spawn(N, 0, Total_T, Port,_) -> 
     Remainder = N rem Total_T,
     io:format("N: ~p Total: ~p Remainder: ~p ~n", [N, Total_T, Remainder]), 
     case Remainder of 
@@ -56,11 +56,19 @@ thread_spawn(N, 0, Total_T, Port) ->
                     io:format("~p", [Error])
             end
     end;
-
-thread_spawn(N, T, Total_T, Port) -> 
+% Spawns a thread and recurses on itself, once T = 0 the base case gets executed above.
+% Overflow is used to allocate the remainder as equally as possible among the threads. 
+thread_spawn(N, T, Total_T, Port, Overflow) -> 
     Pid = self(),
-    spawn(fun() -> thread(Pid, N div Total_T, Port) end), 
-    {Best_Time, {Disconnects, Dropped}} = thread_spawn(N, T-1, Total_T, Port),
+    if Overflow > 0 ->
+           Reqs = (N div Total_T) + 1,
+           Newoverflow = Overflow - 1;
+       true ->
+           Reqs = (N div Total_T),
+           Newoverflow = Overflow
+    end,
+    spawn(fun() -> thread(Pid, Reqs, Port) end), 
+    {Best_Time, {Disconnects, Dropped}} = thread_spawn(N, T-1, Total_T, Port, Newoverflow),
     receive 
         {ok, Time, {Dis, Drop}} -> 
             if Time > Best_Time -> 
@@ -74,7 +82,7 @@ thread_spawn(N, T, Total_T, Port) ->
 
 thread(Pid,N,Port) -> 
     Fails = run(N, host(), Port), 
-    Finish = erlang:system_time(millisecond), 
+    Finish = erlang:system_time(milli_seconds), 
     Pid ! {ok, Finish, Fails}.
 
 run(N, Host, Port) -> 
