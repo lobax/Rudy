@@ -32,12 +32,8 @@ bench_average(N, T, Port, I, Time, Lost, Num) ->
 
 
 thread_spawn(N,T,Port) -> 
-    case N rem T of
-        0 -> 
-            thread_spawn(N,T,T,Port,0); 
-        Overflow ->
-            thread_spawn(N,T-1,T-1,Port, Overflow)
-    end. 
+    Overflow = N rem T,
+    thread_spawn(N,T-1,T-1,Port, Overflow).
 
 
 thread_spawn(N, 0, Total_T, Port,_) -> 
