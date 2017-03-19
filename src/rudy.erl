@@ -60,6 +60,7 @@ reply({error, Reason}) ->
 
 reply({{get, [$/ |URI], _}, _, _}) -> 
     io:format("[Request] ~p ~n[Response] ",[URI]),
+    timer:sleep(20),
     case file:read_file(URI) of
         {ok, File} -> 
             io:format("~p ~n",[File]), 

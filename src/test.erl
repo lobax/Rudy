@@ -5,9 +5,9 @@ host() ->
     localhost.
     %{130,229,168,51}.
 
-bench(T) ->
+bench(N) ->
     file:write_file("out/output.dat",[""]),
-    N = 25,
+    T = 25,
     Port = 8080,
     bench(N,T,Port).
 
@@ -16,8 +16,8 @@ bench(_,0,_) ->
 bench(N, T, Port) -> 
     Iterations = 5,
     {Time, Lost} = bench_average(N, T, Port, Iterations), 
-    file:write_file("out/output.dat",  io_lib:fwrite("~p ~p ~p ~p ~p~n", [N, T, Time, Lost, Iterations]), [append]),
-    io:format("T: ~p, The execution time is: ~p, lost connections: ~p~n", [T, Time, Lost]),
+    file:write_file("out/output.dat",  io_lib:fwrite("~p ~p ~p ~p ~p~n", [N, T, Time/1000, Lost, Iterations]), [append]),
+    %io:format("T: ~p, The execution time is: ~p, lost connections: ~p~n", [T, Time, Lost]),
     bench(N, T-1, Port).
 
 bench_average(N,T,Port,I) ->
@@ -26,17 +26,41 @@ bench_average(N,T,Port,I) ->
 bench_average(_,_,_,0, Time, Lost, Num) ->
     {(Time / Num), (Lost / Num)};
 bench_average(N, T, Port, I, Time, Lost, Num) ->
-    Start = erlang:system_time(micro_seconds),
+    Start = erlang:system_time(millisecond),
     {End, {Disconnects, Dropped}} = thread_spawn(N, T, Port),
     bench_average(N, T, Port, I - 1, Time + (End - Start), Lost + (Disconnects + Dropped), Num).
 
-thread_spawn(_, 0, _) -> 
-    {0, {0,0}};
 
-thread_spawn(N, T, Port) -> 
+thread_spawn(N,T,Port) -> 
+    case N rem T of
+        0 -> 
+            thread_spawn(N,T,T,Port); 
+        _ -> 
+            thread_spawn(N,T-1,T-1,Port)
+    end. 
+
+
+thread_spawn(N, 0, Total_T, Port) -> 
+    Remainder = N rem Total_T,
+    io:format("N: ~p Total: ~p Remainder: ~p ~n", [N, Total_T, Remainder]), 
+    case Remainder of 
+        0 -> 
+            {0,{0,0}};
+        _ ->
+            Pid = self(),
+            spawn(fun() -> thread(Pid, Remainder, Port) end), 
+            receive 
+                {ok, Time, {Dis, Drop}} -> 
+                    {Time, {Dis, Drop}};
+                Error -> 
+                    io:format("~p", [Error])
+            end
+    end;
+
+thread_spawn(N, T, Total_T, Port) -> 
     Pid = self(),
-    spawn(fun() -> thread(Pid, N ,Port) end), 
-    {Best_Time, {Disconnects, Dropped}} = thread_spawn(N, T-1, Port),
+    spawn(fun() -> thread(Pid, N div Total_T, Port) end), 
+    {Best_Time, {Disconnects, Dropped}} = thread_spawn(N, T-1, Total_T, Port),
     receive 
         {ok, Time, {Dis, Drop}} -> 
             if Time > Best_Time -> 
@@ -50,7 +74,7 @@ thread_spawn(N, T, Port) ->
 
 thread(Pid,N,Port) -> 
     Fails = run(N, host(), Port), 
-    Finish = erlang:system_time(micro_seconds), 
+    Finish = erlang:system_time(millisecond), 
     Pid ! {ok, Finish, Fails}.
 
 run(N, Host, Port) -> 

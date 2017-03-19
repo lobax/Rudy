@@ -1,0 +1,83 @@
+\documentclass[12pt]{article}
+
+%% PACKAGES
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{subcaption}
+\usepackage[
+backend=biber,
+style=ieee,
+citestyle=ieee 
+]{biblatex}
+\usepackage[parfill]{parskip} % Activate to begin paragraphs with an empty line rather than an indent
+
+\addbibresource{bib.bib}
+
+
+%    Present and explain your performance evaluation results, if any.
+ %   Give a summary of your achievements. In particular, explain briefly what you learned from the  assignment and any problems you may have encountered. You are also welcome to suggest changes to the assignment in order to improve it.
+ %  %  Describe your implementation (functions, classes, interfaces).
+ %    Indicate what programming environments (software) and computing platforms (a computer and OS) you used for implementation.
+ %    Describe algorithms you have developed (chosen), synchronization or/and communication mechanisms you have used, and explain motivation for your design choices.
+ %    Describe the application(s) you have developed.
+
+ \title{A concurrent HTTP-server
+ \\ \large ID1217 Concurrent Programming }
+ \author{Kristian Alvarez Jörgensen\\940706-6217\\\texttt{krijor@kth.se}
+ \and Michael Chlebek \\950704-2118\\\texttt{chlebek@kth.se}}
+
+ \begin{document}
+
+ \maketitle
+
+ \section{Introduction}
+
+ \section{Implementation} 
+ The HTTP-server was developed in erlang and uses multiple threads to handle requests. It uses message passing to measure load, and can use this information to scale up. To test its performance we decided to create a concurrent benchmarking program. We used GNUPlot to visualise the data from the benchmarks in a meaningful way.  
+
+ Erlang was chosen because of its simple actor-based concurrency model, which uses asynchronous message passing for communication between threads. Because of this model, race conditions can be avoided and are of no concern. 
+
+ In Erlang parlance a process is a node and a thread is process, and these terms will be used henceforth. 
+ \subsection{Web Server}
+
+ Two implementations of the web server where made - one serial and one concurrent. The performance of the serial implementation is compared to that of the concurrent in order to measure real speedup. 
+
+ A monitor was developed to track server load, and the server process(es) communicate with the monitor by passing messages every time a connection is accepted. 
+
+ The serial implementation of the HTTP server was based on the simple, almost functional server outlined by Johan Montelius in the course ID1019. It is expanded to sufficiently handle HTTP GET-requests, with 200 ok, 400 bad request and 404 not found responses implemented. Using the gen\_tcp library the server waits for a request, handles it and then goes back to waiting. Every time it accepts a request, it sends a message to the monitor so that it can track load. 
+
+ The concurrent implementation was developed to spawn four processes to begin with. These processes act in the same fashion as the single process in the serial implementation. However, instead of just alerting the monitor when a process has accepted a request, it also alerts the monitor when it is done. The monitor in the concurrent implementation can thus roughl (roughly because we cannot know for sure that messages arrive in the order they where sent)  make out how many processes are
+ actively handling requests at any given moment, and it was developed to use this information to scale up the number of processes if under heavy load. The scaling policy was set so that the monitor doubles the number of worker processes if 3/4:ths of the processes are concurrently handling requests. Since Erlang processes are very light weight, an overhead of extra processes is not too costly and it allows the server to handle bursts of activity quicker. 
+An exponential scaling policy allows the server to handle bursts of traffic that a more linear scaling would have trouble with responding to. 
+ \subsection{Benchmark}
+ The benchmark was written in erlang and it makes use of the gen\_tcp library for communication with the web server.
+ It simulates a specified amount of GET-requests using a specified amount of concurrent processes against the web server. The benchmark then repeats these operations a set amount of times in order to get an average value for the specified parameters. If a package is dropped or the connection is disconnected, henceforth "lost", it will be re-sent. The values being tracked are the total time taken from the first request sent until the last one it received, and, the amount
+ of lost packages. The data is written to a file which we processed with GNUPlot to create a .jpeg file so that we could visualise the data.
+
+ The code can roughly be divided into two parts. One "main" part which is responsible for spawning processes, collecting the results and writing these to the data file, and the other which are the worker processes themselves who send the actual requests. The workers communicate with the "main" process who spawned them to let them know when they are finished or if they were unsuccessful in their request to the web server.
+
+ \section{Results} 
+
+
+
+
+ \section{Discussion} 
+
+ The concurrent server currently lacks a mechanism to scale down. Although erlang processes are very light weight compared to OS-processes, the overhead is non-negligable if the load is low and the number of processes is very high. 
+
+ Unfortunately, the Accept-method in the gen\_tcp library is blocking. This complicates down-scaling in the current setup, since this means that the idle processes not doing any work will not be able to signaled by the montior for shut down until it has been schedualed work. By that time, circumstances could be very different and upscaling might necessairy. The monitor also currently keeps track of active processes with the help of a list and an ID-number, so for simple process
+ management the monitor should be able to signal processes to terminate according to the list order. But since a process might process a request after it has been asked to terminate, this is not possible, and fragmentation of the process activity list is unavoidable. 
+
+ In order to solve this, a cleaner design could be to to instead have a process tasked with accepting requests. This thread would have a list of worker processes that are ready to handle these requests. If these processes are unavailable, the 
+
+ \section{Conclusion} 
+
+
+
+
+ \newpage
+ \ism to scale donprintbibliography
+ \end{document}
+ 

@@ -23,7 +23,7 @@ rudy2: all
 
 test: all
 	mkdir -p out
-	@erl -pa ./ebin -eval 'test:bench(25)' -eval 'init:stop()' -noshell
+	@erl -pa ./ebin -eval 'test:bench(100)' -eval 'init:stop()' -noshell
 	gnuplot gnuplot.conf
 
 plot: output.dat

@@ -1,5 +1,5 @@
 -module(rudy2). 
--export([start/1, stop/0]). 
+-export([start/1, stop/0, handler/3]). 
 
 start(Port) -> 
     register(rudy, spawn(fun() -> 
@@ -10,21 +10,16 @@ start(Port) ->
 stop() -> 
     exit(whereis(rudy), "time to die"). 
 
-%% Constants
-number_of_handlers() -> 
-    4.
 
 %%%%%%%%%%%%%%%%%%
-%%% INIT PORT %%%
+%%%    INIT    %%%
 %%%%%%%%%%%%%%%%%%
 
 init(Port) -> 
-    Monitor = monitor:start(), % Start monitor process 
     Opt = [list, {active, false}, {reuseaddr, true}],
     case gen_tcp:listen(Port, Opt) of 
         {ok, Listen} -> 
-            Monitor ! listen, % Prepare server monitor
-            spawn_handlers(Listen, Monitor), 
+            monitor2:start(Listen), % Start monitor process 
             ok; 
         {error, _Error} -> 
             error
@@ -34,23 +29,14 @@ init(Port) ->
 %%%  HANDLER   %%%
 %%%%%%%%%%%%%%%%%%
 
-spawn_handlers(Listen, Monitor) -> 
-    N = number_of_handlers(), 
-    spawn_handlers(N, Listen, Monitor). 
 
-spawn_handlers(0, _Listen, _Monitor) -> 
-    io:format("Four handlers initiated~n"),
-    ok;
-spawn_handlers(N, Listen, Monitor) -> 
-    spawn_link(fun() -> handler(Listen, Monitor) end), 
-    spawn_handlers(N-1, Listen, Monitor). 
-
-handler(Listen, Monitor) -> 
+handler(Id, Listen, Monitor) -> 
     case gen_tcp:accept(Listen) of
         {ok, Client} -> 
-            Monitor ! request_accepted, 
+            Monitor ! {request_accepted, Id}, 
             request(Client),
-            handler(Listen, Monitor);
+            Monitor ! {request_handled, Id}, 
+            handler(Id, Listen, Monitor);
         {error, Error} -> 
             io:format("ERROR: ~p~n", [Error]),
             error
@@ -58,7 +44,6 @@ handler(Listen, Monitor) ->
 
 request(Client) -> 
     Recv = gen_tcp:recv(Client, 0), 
-    io:format("~n"),
     case Recv of
         {ok, Str} -> 
             Request = http:parse_request(Str),
@@ -75,13 +60,18 @@ reply({error, Reason}) ->
             http:bad_req()
     end; 
 
-reply({{get, [$/ |URI], _}, _, _}) -> 
-    io:format("[Request] ~p ~n[Response] ",[URI]),
-    case file:read_file(URI) of
+
+reply({{get, URI, _}, _, _}) -> 
+    Start = erlang:system_time(micro_seconds),
+    timer:sleep(20),
+    case file:read_file( "web_html" ++ URI) of
         {ok, File} -> 
-            io:format("~p ~n",[File]), 
+            End = erlang:system_time(micro_seconds),
+            %io:format("[Request] ~p ~n[Response (processed in ~p)] ~n",[URI, End - Start]),
             http:ok([File]);
         {error, _Reason} -> 
-            io:format("404 Not found~n"),
+            End = erlang:system_time(micro_seconds),
+            %io:format("[Request] ~p ~n[Response (processed in ~p)] ~n",[URI, End - Start]),
             http:fnf() 
     end. 
+
